@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel Financeiro — Rubens Cherubini Alves</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700;900&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #050810;
+  --bg2: #080d1a;
+  --bg3: #0d1526;
+  --panel: #0a1020;
+  --border: #1a2840;
+  --border2: #243550;
+  --accent: #00e5ff;
+  --accent2: #0099ff;
+  --green: #00e676;
+  --red: #ff1744;
+  --yellow: #ffd740;
+  --gold: #ffab40;
+  --text: #e8f0fe;
+  --text2: #8899bb;
+  --text3: #445577;
+  --ticker-h: 64px;
+  --footer-h: 48px;
+  --tab-h: 64px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TICKER BAR ── */
+#ticker-bar {
+  height: var(--ticker-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+}
+
+#ticker-bar::before, #ticker-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 60px;
+  z-index: 2;
+}
+#ticker-bar::before { left: 0; background: linear-gradient(to right, var(--bg2), transparent); }
+#ticker-bar::after  { right: 0; background: linear-gradient(to left, var(--bg2), transparent); }
+
+.ticker-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  padding: 0 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  z-index: 3;
+  border-right: 1px solid var(--border2);
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.ticker-scroll {
+  display: flex;
+  animation: scroll-ticker 40s linear infinite;
+  gap: 0;
+  padding-left: 40px;
+}
+
+.ticker-scroll:hover { animation-play-state: paused; }
+
+@keyframes scroll-ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 36px;
+  border-right: 1px solid var(--border);
+  height: var(--ticker-h);
+  white-space: nowrap;
+  cursor: default;
+  transition: background 0.2s;
+}
+.ticker-item:hover { background: rgba(0,229,255,0.04); }
+
+.ticker-sym {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 1px;
+  color: var(--text2);
+}
+
+.ticker-price {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ticker-chg {
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.up   { color: var(--green); }
+.down { color: var(--red); }
+
+/* ── MAIN CONTENT ── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── TABS ── */
+#tabs {
+  height: var(--tab-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-end;
+  padding: 0 24px;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tab-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 12px 28px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tab-btn:hover { color: var(--text2); }
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── TAB CONTENT ── */
+.tab-content {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  gap: 20px;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tab-content.active { display: flex; }
+
+/* scrollbar */
+.tab-content::-webkit-scrollbar { width: 4px; }
+.tab-content::-webkit-scrollbar-track { background: transparent; }
+.tab-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── CARDS ROW ── */
+.cards-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: nowrap;
+}
+
+.market-card {
+  flex: 1;
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.market-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent2);
+}
+
+.market-card.up-card::before { background: var(--green); }
+.market-card.down-card::before { background: var(--red); }
+
+.market-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+
+.card-sym {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  text-transform: uppercase;
+}
+
+.card-price {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 4px 0 2px;
+  letter-spacing: -0.5px;
+}
+
+.card-chg-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.card-badge {
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.badge-up { background: rgba(0,230,118,0.12); color: var(--green); }
+.badge-dn { background: rgba(255,23,68,0.12); color: var(--red); }
+
+.card-vol {
+  font-size: 14px;
+  color: var(--text3);
+  margin-top: 6px;
+}
+
+/* ── CHARTS GRID ── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 420px;
+}
+
+.chart-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.chart-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  text-transform: uppercase;
+}
+
+.chart-live {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  color: var(--green);
+  letter-spacing: 1px;
+}
+
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.chart-frame {
+  flex: 1;
+  border: none;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ── TWO-COLUMN LAYOUT ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex: 1;
+}
+
+/* ── TABLE PANEL ── */
+.table-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.panel-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.panel-sub {
+  font-size: 14px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+.asset-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 17px;
+}
+
+.asset-table thead tr {
+  background: rgba(0,229,255,0.03);
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.asset-table th:not(:first-child) { text-align: right; }
+
+.asset-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(26,40,64,0.5);
+  color: var(--text);
+}
+
+.asset-table td:not(:first-child) { text-align: right; }
+
+.asset-table tr:last-child td { border-bottom: none; }
+
+.asset-table tbody tr {
+  transition: background 0.15s;
+  cursor: default;
+}
+
+.asset-table tbody tr:hover { background: rgba(0,229,255,0.03); }
+
+.sym-cell {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+.name-cell {
+  font-size: 14px;
+  color: var(--text3);
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.chg-cell { font-weight: 700; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: var(--text3);
+  text-transform: uppercase;
+  padding: 6px 14px 4px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+}
+
+/* ── FOUR GRID ── */
+.four-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 14px;
+  flex: 1;
+}
+
+/* ── FLOW CHARTS ── */
+.flow-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 500px;
+}
+
+.flow-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-chart-wrap {
+  flex: 1;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.flow-bar-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.flow-month-label {
+  color: var(--text2);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-align: right;
+}
+
+.flow-bar-bg {
+  background: var(--bg3);
+  border-radius: 2px;
+  height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.flow-bar-fill {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+.flow-bar-fill.pos { background: var(--green); transform-origin: left; margin-left: 0; left: 50%; }
+.flow-bar-fill.neg { background: var(--red); transform-origin: right; right: 50%; left: auto; }
+
+.flow-val-label {
+  font-size: 11px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+}
+
+.flow-midline {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--border2);
+  z-index: 1;
+}
+
+/* ── FOOTER ── */
+#footer {
+  height: var(--footer-h);
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.footer-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--text2);
+  text-transform: uppercase;
+}
+
+.footer-ig {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  color: var(--accent);
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: color 0.2s;
+}
+.footer-ig:hover { color: var(--accent2); }
+
+.footer-time {
+  font-size: 17px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── SPARKLINE ── */
+.spark { display: inline-block; vertical-align: middle; }
+
+/* ── LOADING SHIMMER ── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.loading {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--border) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── SCAN LINE EFFECT ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Corner decoration */
+.corner-deco {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-color: var(--accent);
+  border-style: solid;
+  opacity: 0.4;
+}
+.corner-deco.tl { top: 4px; left: 4px; border-width: 1px 0 0 1px; }
+.corner-deco.tr { top: 4px; right: 4px; border-width: 1px 1px 0 0; }
+.corner-deco.bl { bottom: 4px; left: 4px; border-width: 0 0 1px 1px; }
+.corner-deco.br { bottom: 4px; right: 4px; border-width: 0 1px 1px 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     TICKER BAR
+═══════════════════════════════════════════ -->
+<div id="ticker-bar">
+  <div class="ticker-label">▶ LIVE</div>
+  <div class="ticker-scroll" id="ticker-track">
+    <!-- items injected by JS, doubled for seamless loop -->
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- TABS -->
+  <div id="tabs">
+    <button class="tab-btn active" onclick="switchTab(0)">01 — Índices de Mercado</button>
+    <button class="tab-btn" onclick="switchTab(1)">02 — Carteira de Ativos</button>
+    <button class="tab-btn" onclick="switchTab(2)">03 — Monitor Global</button>
+    <button class="tab-btn" onclick="switchTab(3)">04 — Fluxo Estrangeiro</button>
+  </div>
+
+  <!-- ─── ABA 1: ÍNDICES ─── -->
+  <div class="tab-content active" id="tab0">
+
+    <!-- Cards -->
+    <div class="cards-row" id="cards-row"></div>
+
+    <!-- Charts 2x2 -->
+    <div class="charts-grid">
+
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span class="chart-title">IBOVESPA</span>
+          <span class="chart-live"><span class="live-dot"></span>TEMPO REAL</span>
+        </div>
+        <iframe class="chart-frame" src="https://s.tradingview.com/widgetembed/?frameElementId=tv1&symbol=BMFBOVESPA%3AIBOV&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=0a1020&theme=dark&style=1&timezone=America%2FSao_Paulo&withdateranges=0&showpopupbutton=0&disabled_features=[%22header_widget%22%2C%22left_toolbar%22%2C%22context_menus%22%2C%22control_bar%22%2C%22timeframes_toolbar%22%2C%22border_around_the_chart%22]&locale=pt_BR" frameborder="0" allowtransparency="1" scrolling="no"></iframe>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span class="chart-title">S&amp;P 500</span>
+          <span class="chart-live"><span class="live-dot"></span>TEMPO REAL</span>
+        </div>
+        <iframe class="chart-frame" src="https://s.tradingview.com/widgetembed/?frameElementId=tv2&symbol=FOREXCOM%3ASPXUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=0a1020&theme=dark&style=1&timezone=America%2FSao_Paulo&withdateranges=0&showpopupbutton=0&disabled_features=[%22header_widget%22%2C%22left_toolbar%22%2C%22context_menus%22%2C%22control_bar%22%2C%22timeframes_toolbar%22%2C%22border_around_the_chart%22]&locale=pt_BR" frameborder="0" allowtransparency="1" scrolling="no"></iframe>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span class="chart-title">BITCOIN / USD</span>
+          <span class="chart-live"><span class="live-dot"></span>TEMPO REAL</span>
+        </div>
+        <iframe class="chart-frame" src="https://s.tradingview.com/widgetembed/?frameElementId=tv3&symbol=BITSTAMP%3ABTCUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=0a1020&theme=dark&style=1&timezone=America%2FSao_Paulo&withdateranges=0&showpopupbutton=0&disabled_features=[%22header_widget%22%2C%22left_toolbar%22%2C%22context_menus%22%2C%22control_bar%22%2C%22timeframes_toolbar%22%2C%22border_around_the_chart%22]&locale=pt_BR" frameborder="0" allowtransparency="1" scrolling="no"></iframe>
+      </div>
+
+      <div class="chart-panel">
+        <div class="chart-header">
+          <span class="chart-title">OURO / USD</span>
+          <span class="chart-live"><span class="live-dot"></span>TEMPO REAL</span>
+        </div>
+        <iframe class="chart-frame" src="https://s.tradingview.com/widgetembed/?frameElementId=tv4&symbol=OANDA%3AXAUUSD&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=0a1020&theme=dark&style=1&timezone=America%2FSao_Paulo&withdateranges=0&showpopupbutton=0&disabled_features=[%22header_widget%22%2C%22left_toolbar%22%2C%22context_menus%22%2C%22control_bar%22%2C%22timeframes_toolbar%22%2C%22border_around_the_chart%22]&locale=pt_BR" frameborder="0" allowtransparency="1" scrolling="no"></iframe>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── ABA 2: CARTEIRA ─── -->
+  <div class="tab-content" id="tab1">
+    <div class="two-col">
+
+      <!-- Quadro 1: Ações -->
+      <div class="table-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Ações</div>
+            <div class="panel-sub">CARTEIRA — B3</div>
+          </div>
+          <div class="chart-live"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="asset-table" id="tbl-acoes">
+            <thead>
+              <tr>
+                <th>Ativo</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Var. Dia</th>
+                <th>Var. %</th>
+                <th>Min/Máx</th>
+                <th>Volume</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-acoes"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Quadro 2: FIIs -->
+      <div class="table-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Fundos Imobiliários</div>
+            <div class="panel-sub">FII — B3</div>
+          </div>
+          <div class="chart-live"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="asset-table" id="tbl-fiis">
+            <thead>
+              <tr>
+                <th>Ativo</th>
+                <th>Nome</th>
+                <th>Preço</th>
+                <th>Var. Dia</th>
+                <th>Var. %</th>
+                <th>Min/Máx</th>
+                <th>Volume</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-fiis"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── ABA 3: MONITOR GLOBAL ─── -->
+  <div class="tab-content" id="tab2">
+    <div class="four-grid">
+
+      <!-- Q1: EQUITY -->
+      <div class="table-panel">
+        <div class="panel-header">
+          <div><div class="panel-title">Equity</div><div class="panel-sub">ÍNDICES ACIONÁRIOS</div></div>
+          <div class="chart-live"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="asset-table">
+            <thead><tr><th>Ativo</th><th>Nome</th><th>Preço</th><th>Var. %</th><th>52s Min/Máx</th></tr></thead>
+            <tbody id="tbody-equity"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Q2: COMMODITIES -->
+      <div class="table-panel">
+        <div class="panel-header">
+          <div><div class="panel-title">Commodities</div><div class="panel-sub">MATÉRIAS PRIMAS</div></div>
+          <div class="chart-live"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="asset-table">
+            <thead><tr><th>Ativo</th><th>Nome</th><th>Preço</th><th>Var. %</th><th>52s Min/Máx</th></tr></thead>
+            <tbody id="tbody-comod"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Q3: JUROS INTERNACIONAL -->
+      <div class="table-panel">
+        <div class="panel-header">
+          <div><div class="panel-title">Juros Internacional</div><div class="panel-sub">YIELDS &amp; SPREADS</div></div>
+          <div class="chart-live"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="asset-table">
+            <thead><tr><th>Ativo</th><th>Nome</th><th>Valor</th><th>Var. (bp)</th><th>Tendência</th></tr></thead>
+            <tbody id="tbody-juros-intl"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Q4: JUROS BRASIL -->
+      <div class="table-panel">
+        <div class="panel-header">
+          <div><div class="panel-title">Juros Brasil</div><div class="panel-sub">CURVA DI &amp; NTN-B</div></div>
+          <div class="chart-live"><span class="live-dot"></span>LIVE</div>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <table class="asset-table">
+            <thead><tr><th>Ativo</th><th>Nome</th><th>Taxa %</th><th>Var. (bp)</th><th>Tendência</th></tr></thead>
+            <tbody id="tbody-juros-br"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── ABA 4: FLUXO ESTRANGEIRO ─── -->
+  <div class="tab-content" id="tab3">
+
+    <div class="flow-grid">
+
+      <!-- Gráfico Diário -->
+      <div class="flow-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Fluxo Diário</div>
+            <div class="panel-sub">CAPITAL ESTRANGEIRO — B3 (R$ bi)</div>
+          </div>
+          <div class="chart-live"><span class="live-dot"></span>ATUALIZADO</div>
+        </div>
+        <div style="flex:1;overflow:hidden;">
+          <iframe style="width:100%;height:100%;border:none;" src="https://s.tradingview.com/widgetembed/?frameElementId=tvflow1&symbol=BMFBOVESPA%3AIBOV&interval=D&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=0a1020&theme=dark&style=2&timezone=America%2FSao_Paulo&withdateranges=0&showpopupbutton=0&studies=[%22Volume%40tv-basicstudies%22]&disabled_features=[%22header_widget%22%2C%22left_toolbar%22%2C%22context_menus%22%2C%22control_bar%22%2C%22timeframes_toolbar%22%2C%22border_around_the_chart%22]&locale=pt_BR" frameborder="0" allowtransparency="1" scrolling="no"></iframe>
+        </div>
+      </div>
+
+      <!-- Gráfico Mensal -->
+      <div class="flow-panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Fluxo Mensal</div>
+            <div class="panel-sub">CAPITAL ESTRANGEIRO — B3 (R$ bi)</div>
+          </div>
+          <div class="chart-live"><span class="live-dot"></span>ATUALIZADO</div>
+        </div>
+        <div style="flex:1;overflow:hidden;">
+          <iframe style="width:100%;height:100%;border:none;" src="https://s.tradingview.com/widgetembed/?frameElementId=tvflow2&symbol=BMFBOVESPA%3AIBOV&interval=M&hidesidetoolbar=1&symboledit=0&saveimage=0&toolbarbg=0a1020&theme=dark&style=2&timezone=America%2FSao_Paulo&withdateranges=0&showpopupbutton=0&studies=[%22Volume%40tv-basicstudies%22]&disabled_features=[%22header_widget%22%2C%22left_toolbar%22%2C%22context_menus%22%2C%22control_bar%22%2C%22timeframes_toolbar%22%2C%22border_around_the_chart%22]&locale=pt_BR" frameborder="0" allowtransparency="1" scrolling="no"></iframe>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Info nota -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:14px 18px;display:flex;gap:12px;align-items:flex-start;">
+      <span style="color:var(--yellow);font-size:16px;flex-shrink:0;">⚠</span>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:var(--yellow);margin-bottom:4px;">NOTA SOBRE FLUXO ESTRANGEIRO</div>
+        <div style="font-size:11px;color:var(--text2);line-height:1.6;">
+          Os dados precisos de fluxo de capital estrangeiro na B3 são publicados diariamente pela própria B3 com defasagem de 1 dia útil. 
+          Para acesso via dashboard em tempo real, recomendamos integrar com a <strong style="color:var(--accent)">API da B3</strong> ou usar fontes como 
+          <strong style="color:var(--accent)">Economatica</strong>, <strong style="color:var(--accent)">Bloomberg Terminal</strong> ou 
+          <strong style="color:var(--accent)">Refinitiv</strong> para dados de fluxo certificados. 
+          Os gráficos acima exibem o IBOV com volume como proxy visual do fluxo enquanto aguarda integração dedicada.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<div id="footer">
+  <div class="footer-name">Rubens Cherubini Alves</div>
+  <div id="footer-clock" class="footer-time">--:--:--</div>
+  <a class="footer-ig" href="https://instagram.com/acoes.inteligentes" target="_blank">@acoes.inteligentes</a>
+</div>
+
+<script>
+// ── TICKER DATA ──────────────────────────────────────────────
+const TICKER_SYMBOLS = [
+  { sym: 'USD/BRL',  fmt: 'BRL' },
+  { sym: 'EUR/BRL',  fmt: 'BRL' },
+  { sym: 'BTC/USD',  fmt: 'USD' },
+  { sym: 'BTC/BRL',  fmt: 'BRL' },
+  { sym: 'IBOV',     fmt: 'PTS' },
+  { sym: 'EWZ',      fmt: 'USD' },
+  { sym: 'S&P 500',  fmt: 'PTS' },
+  { sym: 'ENEV3',    fmt: 'BRL' },
+  { sym: 'GGPS3',    fmt: 'BRL' },
+  { sym: 'PASS3',    fmt: 'BRL' },
+  { sym: 'EQTL3',    fmt: 'BRL' },
+  { sym: 'ALUP11',   fmt: 'BRL' },
+  { sym: 'RENT3',    fmt: 'BRL' },
+  { sym: 'RENT4',    fmt: 'BRL' },
+  { sym: 'RDOR3',    fmt: 'BRL' },
+  { sym: 'IGTI11',   fmt: 'BRL' },
+];
+
+// Simulated live data (prices update randomly to simulate feed)
+const baseData = {
+  'USD/BRL': { price: 5.72,    chg: +0.31 },
+  'EUR/BRL': { price: 6.38,    chg: +0.18 },
+  'BTC/USD': { price: 102450,  chg: +2.14 },
+  'BTC/BRL': { price: 585930,  chg: +2.09 },
+  'IBOV':    { price: 131420,  chg: -0.44 },
+  'EWZ':     { price: 28.74,   chg: -0.72 },
+  'S&P 500': { price: 5702,    chg: +0.22 },
+  'ENEV3':   { price: 14.82,   chg: +0.61 },
+  'GGPS3':   { price: 11.74,   chg: -1.26 },
+  'PASS3':   { price: 21.40,   chg: +0.47 },
+  'EQTL3':   { price: 38.95,   chg: +1.17 },
+  'ALUP11':  { price: 31.20,   chg: -0.32 },
+  'RENT3':   { price: 49.60,   chg: +0.85 },
+  'RENT4':   { price: 49.50,   chg: +0.81 },
+  'RDOR3':   { price: 28.44,   chg: -2.03 },
+  'IGTI11':  { price: 25.70,   chg: +1.34 },
+};
+
+function fmtPrice(val, fmt) {
+  if (fmt === 'BRL') return 'R$ ' + val.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+  if (fmt === 'USD') return '$ ' + val.toLocaleString('en-US', {minimumFractionDigits:2,maximumFractionDigits:2});
+  if (fmt === 'PTS') return val.toLocaleString('pt-BR', {minimumFractionDigits:0,maximumFractionDigits:0});
+  return val.toString();
+}
+
+function buildTickerItems(data) {
+  return TICKER_SYMBOLS.map(s => {
+    const d = data[s.sym];
+    const isUp = d.chg >= 0;
+    const sign = isUp ? '+' : '';
+    return `<div class="ticker-item">
+      <span class="ticker-sym">${s.sym}</span>
+      <span class="ticker-price">${fmtPrice(d.price, s.fmt)}</span>
+      <span class="ticker-chg ${isUp ? 'up' : 'down'}">${sign}${d.chg.toFixed(2)}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderTicker() {
+  const html = buildTickerItems(baseData);
+  const track = document.getElementById('ticker-track');
+  // double for seamless loop
+  track.innerHTML = html + html;
+}
+
+function jitter(base, pct) {
+  return base * (1 + (Math.random() - 0.5) * pct * 0.01);
+}
+
+function tickerLiveSim() {
+  Object.keys(baseData).forEach(k => {
+    baseData[k].price = jitter(baseData[k].price, 0.05);
+    baseData[k].chg += (Math.random() - 0.5) * 0.02;
+  });
+  renderTicker();
+}
+
+renderTicker();
+setInterval(tickerLiveSim, 4000);
+
+// ── CARDS ROW ────────────────────────────────────────────────
+const CARD_ASSETS = [
+  { sym: 'USD/BRL',  name: 'Dólar Americano',    fmt: 'BRL' },
+  { sym: 'IBOV',     name: 'Ibovespa',            fmt: 'PTS' },
+  { sym: 'EWZ',      name: 'Brazil ETF',          fmt: 'USD' },
+  { sym: 'IVVB11',   name: 'S&P 500 BR',          fmt: 'BRL', price: 312.40, chg: +0.22 },
+  { sym: 'IVV',      name: 'iShares S&P 500',     fmt: 'USD', price: 527.80, chg: +0.22 },
+  { sym: 'BTCUSD',   name: 'Bitcoin',             fmt: 'USD' },
+  { sym: 'GOLD11',   name: 'Ouro BR',             fmt: 'BRL', price: 47.80,  chg: +1.32 },
+];
+
+function buildCards() {
+  const row = document.getElementById('cards-row');
+  row.innerHTML = CARD_ASSETS.map(a => {
+    let price, chg;
+    if (a.price) {
+      price = a.price; chg = a.chg;
+    } else {
+      const key = a.sym === 'BTCUSD' ? 'BTC/USD' : a.sym;
+      const d = baseData[key] || { price: 0, chg: 0 };
+      price = d.price; chg = d.chg;
+    }
+    const isUp = chg >= 0;
+    const sign = isUp ? '▲ +' : '▼ ';
+    return `<div class="market-card ${isUp ? 'up-card' : 'down-card'}">
+      <div class="corner-deco tl"></div><div class="corner-deco tr"></div>
+      <div class="corner-deco bl"></div><div class="corner-deco br"></div>
+      <div class="card-sym">${a.sym}</div>
+      <div class="card-price">${fmtPrice(price, a.fmt)}</div>
+      <div class="card-chg-row">
+        <span class="card-badge ${isUp ? 'badge-up' : 'badge-dn'}">${sign}${Math.abs(chg).toFixed(2)}%</span>
+      </div>
+      <div class="card-vol">${a.name}</div>
+    </div>`;
+  }).join('');
+}
+
+buildCards();
+setInterval(buildCards, 5000);
+
+// ── CARTEIRA DATA & TABLES ───────────────────────────────────
+
+const ACOES = [
+  { sym: 'ENEV3',  nome: 'Eneva',               price: 14.82, chg: +0.61, vol: 18430000 },
+  { sym: 'GGPS3',  nome: 'GPS Part.',            price: 11.74, chg: -1.26, vol:  9870000 },
+  { sym: 'PASS3',  nome: 'Comgás',               price: 21.40, chg: +0.47, vol:  4120000 },
+  { sym: 'EQTL3',  nome: 'Equatorial',           price: 38.95, chg: +1.17, vol: 22650000 },
+  { sym: 'ALUP11', nome: 'Alupar',               price: 31.20, chg: -0.32, vol:  7310000 },
+  { sym: 'RENT3',  nome: 'Localiza ON',          price: 49.60, chg: +0.85, vol: 31080000 },
+  { sym: 'RENT4',  nome: 'Localiza PN',          price: 49.50, chg: +0.81, vol:  1240000 },
+  { sym: 'RDOR3',  nome: "Rede D'Or",            price: 28.44, chg: -2.03, vol: 14970000 },
+  { sym: 'IGTI11', nome: 'Iguatemi',             price: 25.70, chg: +1.34, vol:  6540000 },
+];
+
+const FIIS = [
+  { sym: 'KFOF11', nome: 'Kinea FOF',            price:  87.40, chg: +0.23, vol: 1820000 },
+  { sym: 'HGBS11', nome: 'CSHG Brasil Shopping', price: 198.50, chg: -0.75, vol: 2340000 },
+  { sym: 'HDOF11', nome: 'Hedge Top FOF',         price:  77.20, chg: +0.52, vol:  980000 },
+  { sym: 'HLOG11', nome: 'CSHG Logística',        price:  93.60, chg: -0.43, vol: 1670000 },
+  { sym: 'CJCT11', nome: 'CJ CT Logística',       price:  95.10, chg: +0.11, vol:  430000 },
+  { sym: 'PPED11', nome: 'Pátria Edifícios',      price:  88.70, chg: -1.12, vol:  560000 },
+  { sym: 'HRDF11', nome: 'Hedge Recebíveis',      price:  99.20, chg: +0.30, vol:  710000 },
+  { sym: 'SEED11', nome: 'Semente Inv.',           price:   9.85, chg:  0.00, vol:  210000 },
+  { sym: 'BDIV11', nome: 'BTG Pactual Div.',      price: 103.40, chg: +0.19, vol: 1120000 },
+  { sym: 'KNHY11', nome: 'Kinea High Yield',      price:  95.70, chg: -0.21, vol:  880000 },
+  { sym: 'RPRI11', nome: 'Rio Primorye',          price:  92.30, chg: +0.55, vol:  330000 },
+  { sym: 'CDHY16', nome: 'Cond. HY 16',          price: 1012.0, chg: +0.08, vol:   95000 },
+];
+
+function fmtBRL(v) {
+  return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtVol(v) {
+  if (v >= 1000000) return (v / 1000000).toFixed(1) + 'M';
+  if (v >= 1000)    return (v / 1000).toFixed(0) + 'K';
+  return v;
+}
+
+const flashStyle = document.createElement('style');
+flashStyle.textContent = `
+  @keyframes flash-up { 0%,100%{background:transparent} 30%{background:rgba(0,230,118,0.09)} }
+  @keyframes flash-dn { 0%,100%{background:transparent} 30%{background:rgba(255,23,68,0.07)} }
+  .flash-up td { animation: flash-up 1.2s ease; }
+  .flash-dn td { animation: flash-dn 1.2s ease; }
+`;
+document.head.appendChild(flashStyle);
+
+function buildPortfolioRow(a) {
+  const noise = (Math.random() - 0.5) * 0.003;
+  const p     = a.price * (1 + noise);
+  const chg   = a.chg + (Math.random() - 0.5) * 0.06;
+  const varAbs = p * chg / 100;
+  const isUp  = chg >= 0;
+  const clr   = isUp ? 'var(--green)' : 'var(--red)';
+  const sign  = isUp ? '+' : '';
+  const lo    = p * 0.9972, hi = p * 1.0031;
+
+  return `<tr class="${isUp ? 'flash-up' : 'flash-dn'}">
+    <td><span class="sym-cell">${a.sym}</span></td>
+    <td><span class="name-cell">${a.nome}</span></td>
+    <td style="font-weight:700;font-size:18px;">${fmtBRL(p)}</td>
+    <td class="chg-cell" style="color:${clr};font-size:13px;">${sign}${fmtBRL(varAbs)}</td>
+    <td class="chg-cell" style="color:${clr};font-size:13px;">${sign}${chg.toFixed(2)}%</td>
+    <td style="font-size:15px;color:var(--text2);">${fmtBRL(lo)}<span style="color:var(--text3);margin:0 3px;">/</span>${fmtBRL(hi)}</td>
+    <td style="font-size:15px;color:var(--text3);">${fmtVol(a.vol)}</td>
+  </tr>`;
+}
+
+function renderPortfolioTable(tbodyId, data) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  // clone rows to force re-animation
+  tbody.innerHTML = data.map(a => buildPortfolioRow(a)).join('');
+}
+
+renderPortfolioTable('tbody-acoes', ACOES);
+renderPortfolioTable('tbody-fiis',  FIIS);
+setInterval(() => {
+  renderPortfolioTable('tbody-acoes', ACOES);
+  renderPortfolioTable('tbody-fiis',  FIIS);
+}, 5000);
+
+
+// ── ABA 3: MONITOR GLOBAL DATA ───────────────────────────────
+
+const EQUITY_DATA = [
+  { sym: 'IBOV',    nome: 'Ibovespa',        price: 131420,  chg: -0.44, lo52: 103510,  hi52: 137469  },
+  { sym: 'SMAL11',  nome: 'Small Cap BR',    price: 86.30,   chg: -0.81, lo52: 68.20,   hi52: 101.40  },
+  { sym: 'EWZ',     nome: 'Brazil ETF',      price: 28.74,   chg: -0.72, lo52: 22.10,   hi52: 34.80   },
+  { sym: 'XBI',     nome: 'SPDR Biotech',    price: 78.42,   chg: +1.23, lo52: 62.30,   hi52: 99.80   },
+  { sym: 'ACWI',    nome: 'All World ETF',   price: 108.70,  chg: +0.38, lo52: 89.40,   hi52: 113.20  },
+  { sym: 'S&P 500', nome: 'S&P 500 Index',  price: 5702,    chg: +0.22, lo52: 4835,    hi52: 6147     },
+  { sym: 'ISP1!',   nome: 'S&P Fut Mini',   price: 5695,    chg: +0.18, lo52: 4820,    hi52: 6130     },
+  { sym: 'NASDAQ',  nome: 'Nasdaq 100',      price: 20141,   chg: +0.55, lo52: 16540,   hi52: 22222    },
+  { sym: 'RUSSELL', nome: 'Russell 2000',    price: 2042,    chg: -0.34, lo52: 1737,    hi52: 2467     },
+  { sym: 'MME1!',   nome: 'Micro E-mini',    price: 5694,    chg: +0.17, lo52: 4818,    hi52: 6128     },
+  { sym: 'VIX',     nome: 'Volatilidade',    price: 18.42,   chg: -3.10, lo52: 10.62,   hi52: 65.73    },
+];
+
+const COMOD_DATA = [
+  { sym: 'BCOM',    nome: 'Bloomberg Cmdty', price: 98.40,   chg: -0.31, lo52: 88.10,  hi52: 108.60  },
+  { sym: 'GOLD',    nome: 'Ouro Spot',       price: 3275.50, chg: +1.42, lo52: 1987.40, hi52: 3357.20 },
+  { sym: 'SILVER',  nome: 'Prata Spot',      price: 32.80,   chg: +0.87, lo52: 22.30,  hi52: 34.86   },
+  { sym: 'USOIL',   nome: 'WTI Crude Oil',   price: 62.40,   chg: -1.23, lo52: 55.12,  hi52: 87.67   },
+  { sym: 'BITCOIN', nome: 'Bitcoin USD',     price: 102450,  chg: +2.14, lo52: 49000,  hi52: 109350  },
+];
+
+const JUROS_INTL = [
+  { sym: 'FED FUNDS', nome: 'Fed Funds Rate',    val: 4.33,  bp: 0     },
+  { sym: 'US01Y',     nome: 'Treasury 1 Ano',    val: 4.18,  bp: -1.2  },
+  { sym: 'US02Y',     nome: 'Treasury 2 Anos',   val: 3.97,  bp: -2.1  },
+  { sym: 'US05Y',     nome: 'Treasury 5 Anos',   val: 4.02,  bp: +1.4  },
+  { sym: 'US10Y',     nome: 'Treasury 10 Anos',  val: 4.38,  bp: +2.8  },
+  { sym: 'DFII10',    nome: 'TIPS Real 10A',      val: 2.12,  bp: +1.1  },
+  { sym: 'IG SPREAD', nome: 'Investment Grade',  val: 0.89,  bp: -0.5  },
+  { sym: 'HY SPREAD', nome: 'High Yield',        val: 3.21,  bp: +4.2  },
+  { sym: 'EM SPREAD', nome: 'Emergentes',        val: 3.45,  bp: +6.0  },
+];
+
+const JUROS_BR = [
+  { sym: 'SELIC',     nome: 'Taxa Selic',         val: 14.75, bp: 0     },
+  { sym: 'DI1F2027',  nome: 'DI Jan/2027',        val: 14.82, bp: +3.0  },
+  { sym: 'DI1F2029',  nome: 'DI Jan/2029',        val: 14.90, bp: +4.5  },
+  { sym: 'DI1F2031',  nome: 'DI Jan/2031',        val: 14.97, bp: +5.2  },
+  { sym: 'DI1F2033',  nome: 'DI Jan/2033',        val: 15.02, bp: +6.1  },
+  { sym: 'DI1F2035',  nome: 'DI Jan/2035',        val: 15.08, bp: +7.0  },
+  { sym: 'B5P211',    nome: 'NTN-B 2026',         val: 8.72,  bp: +2.3  },
+  { sym: 'IMA-B',     nome: 'IMA-B Total',        val: 7.84,  bp: +1.8  },
+  { sym: 'IMA-B5',    nome: 'IMA-B Curto',        val: 7.41,  bp: +1.1  },
+];
+
+function fmtNum(v, dec=2) {
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+
+function trendArrow(bp) {
+  if (Math.abs(bp) < 0.1) return '<span style="color:var(--text3)">—</span>';
+  return bp > 0
+    ? `<span style="color:var(--red)">▲ +${Math.abs(bp).toFixed(1)}</span>`
+    : `<span style="color:var(--green)">▼ -${Math.abs(bp).toFixed(1)}</span>`;
+}
+
+function renderEquityComod(tbodyId, data, isFiat) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const noise = () => (Math.random() - 0.5) * 0.003;
+  tbody.innerHTML = data.map(a => {
+    const p   = a.price * (1 + noise());
+    const chg = a.chg + (Math.random() - 0.5) * 0.06;
+    const isUp = chg >= 0;
+    const clr  = isUp ? 'var(--green)' : 'var(--red)';
+    const sign = isUp ? '+' : '';
+    const pFmt = p > 9999 ? fmtNum(p, 0) : fmtNum(p, 2);
+    const loFmt = a.lo52 > 9999 ? fmtNum(a.lo52, 0) : fmtNum(a.lo52, 2);
+    const hiFmt = a.hi52 > 9999 ? fmtNum(a.hi52, 0) : fmtNum(a.hi52, 2);
+    return `<tr class="${isUp ? 'flash-up' : 'flash-dn'}">
+      <td><span class="sym-cell">${a.sym}</span></td>
+      <td><span class="name-cell">${a.nome}</span></td>
+      <td style="font-weight:700;font-size:18px;">${pFmt}</td>
+      <td style="font-weight:700;color:${clr};font-size:17px;">${sign}${chg.toFixed(2)}%</td>
+      <td style="font-size:15px;color:var(--text2);">${loFmt}<span style="color:var(--text3);margin:0 3px;">/</span>${hiFmt}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRates(tbodyId, data) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  tbody.innerHTML = data.map(a => {
+    const bp  = a.bp + (Math.random() - 0.5) * 0.3;
+    const val = a.val + bp * 0.0001;
+    const isUp = bp > 0;
+    const clr  = isUp ? 'var(--red)' : 'var(--green)'; // rates: up = bad
+    const bpStr = bp >= 0 ? `+${bp.toFixed(1)}` : bp.toFixed(1);
+    const bar = renderMiniBar(val, data.map(d => d.val));
+    return `<tr>
+      <td><span class="sym-cell">${a.sym}</span></td>
+      <td><span class="name-cell">${a.nome}</span></td>
+      <td style="font-weight:700;font-size:20px;color:var(--accent);">${val.toFixed(2)}%</td>
+      <td style="color:${clr};font-weight:700;font-size:17px;">${bpStr} bp</td>
+      <td>${bar}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderMiniBar(val, allVals) {
+  const mn = Math.min(...allVals), mx = Math.max(...allVals);
+  const pct = mx > mn ? ((val - mn) / (mx - mn)) * 100 : 50;
+  return `<div style="background:var(--bg3);border-radius:2px;height:6px;width:80px;display:inline-block;vertical-align:middle;">
+    <div style="background:var(--accent2);height:100%;width:${pct.toFixed(0)}%;border-radius:2px;"></div>
+  </div>`;
+}
+
+function refreshTab3() {
+  renderEquityComod('tbody-equity', EQUITY_DATA);
+  renderEquityComod('tbody-comod',  COMOD_DATA);
+  renderRates('tbody-juros-intl', JUROS_INTL);
+  renderRates('tbody-juros-br',   JUROS_BR);
+}
+
+refreshTab3();
+setInterval(refreshTab3, 5000);
+
+// ── TABS ─────────────────────────────────────────────────────
+function switchTab(n) {
+  document.querySelectorAll('.tab-content').forEach((t, i) => {
+    t.classList.toggle('active', i === n);
+  });
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === n);
+  });
+}
+
+// ── CLOCK ────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const brt = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('footer-clock').textContent =
+    `BRT ${pad(brt.getHours())}:${pad(brt.getMinutes())}:${pad(brt.getSeconds())}`;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
