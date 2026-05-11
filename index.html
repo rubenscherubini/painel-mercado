@@ -113,7 +113,7 @@ body { display: flex; flex-direction: column; }
 ───────────────────────────────────── */
 .cards-strip {
   display: flex; gap: 1vw;
-  height: 14vh; flex-shrink: 0;
+  height: 10vh; flex-shrink: 0;
 }
 
 /* Each card = one TradingView mini widget */
@@ -263,7 +263,7 @@ body::after {
           {"proName":"FX_IDC:USDBRL",     "description":"USD/BRL"},
           {"proName":"FX_IDC:EURBRL",     "description":"EUR/BRL"},
           {"proName":"BITSTAMP:BTCUSD",   "description":"BTC/USD"},
-          {"proName":"MERCADO:BTCBRL",    "description":"BTC/BRL"},
+          {"proName":"BINANCE:BTCBRL",    "description":"BTC/BRL"},
           {"proName":"BMFBOVESPA:IBOV",   "description":"IBOV"},
           {"proName":"AMEX:EWZ",          "description":"EWZ"},
           {"proName":"FOREXCOM:SPXUSD",   "description":"S&P 500"},
@@ -616,24 +616,24 @@ setInterval(() => { renderCart('tb-acoes',ACOES); renderCart('tb-fiis',FIIS); },
 
 // ─── ABA 3: MONITOR GLOBAL ──────────────────────────
 const EQ = [
-  {sym:'IBOV',   nome:'Ibovespa',      p:131420, c:-0.44, lo:103510, hi:137469},
-  {sym:'SMAL11', nome:'Small Cap BR',  p:86.30,  c:-0.81, lo:68.20,  hi:101.40},
-  {sym:'EWZ',    nome:'Brazil ETF',    p:28.74,  c:-0.72, lo:22.10,  hi:34.80 },
-  {sym:'XBI',    nome:'SPDR Biotech',  p:78.42,  c:+1.23, lo:62.30,  hi:99.80 },
-  {sym:'ACWI',   nome:'All World',     p:108.70, c:+0.38, lo:89.40,  hi:113.20},
-  {sym:'S&P500', nome:'S&P 500',      p:5702,   c:+0.22, lo:4835,   hi:6147  },
-  {sym:'ISP1!',  nome:'S&P Fut Mini', p:5695,   c:+0.18, lo:4820,   hi:6130  },
-  {sym:'NASDAQ', nome:'Nasdaq 100',    p:20141,  c:+0.55, lo:16540,  hi:22222 },
-  {sym:'RUSSELL',nome:'Russell 2000',  p:2042,   c:-0.34, lo:1737,   hi:2467  },
-  {sym:'MME1!',  nome:'Micro E-mini', p:5694,   c:+0.17, lo:4818,   hi:6128  },
-  {sym:'VIX',    nome:'Volatilidade',  p:18.42,  c:-3.10, lo:10.62,  hi:65.73 },
+  {sym:'IBOV',   nome:'Ibovespa',      p:131420, c:-0.44, lo:103510, hi:137469, cur:'pts'},
+  {sym:'SMAL11', nome:'Small Cap BR',  p:86.30,  c:-0.81, lo:68.20,  hi:101.40, cur:'brl'},
+  {sym:'EWZ',    nome:'Brazil ETF',    p:28.74,  c:-0.72, lo:22.10,  hi:34.80,  cur:'usd'},
+  {sym:'XBI',    nome:'SPDR Biotech',  p:78.42,  c:+1.23, lo:62.30,  hi:99.80,  cur:'usd'},
+  {sym:'ACWI',   nome:'All World',     p:108.70, c:+0.38, lo:89.40,  hi:113.20, cur:'usd'},
+  {sym:'S&P500', nome:'S&P 500',      p:5702,   c:+0.22, lo:4835,   hi:6147,   cur:'pts'},
+  {sym:'ISP1!',  nome:'S&P Fut Mini', p:5695,   c:+0.18, lo:4820,   hi:6130,   cur:'pts'},
+  {sym:'NASDAQ', nome:'Nasdaq 100',    p:20141,  c:+0.55, lo:16540,  hi:22222,  cur:'pts'},
+  {sym:'RUSSELL',nome:'Russell 2000',  p:2042,   c:-0.34, lo:1737,   hi:2467,   cur:'pts'},
+  {sym:'MME1!',  nome:'Micro E-mini', p:5694,   c:+0.17, lo:4818,   hi:6128,   cur:'pts'},
+  {sym:'VIX',    nome:'Volatilidade',  p:18.42,  c:-3.10, lo:10.62,  hi:65.73,  cur:'pts'},
 ];
 const CM = [
-  {sym:'BCOM',   nome:'Bloomberg Cmdty', p:98.40,   c:-0.31, lo:88.10,   hi:108.60},
-  {sym:'GOLD',   nome:'Ouro Spot',       p:3275.50, c:+1.42, lo:1987.40, hi:3357.20},
-  {sym:'SILVER', nome:'Prata Spot',      p:32.80,   c:+0.87, lo:22.30,   hi:34.86 },
-  {sym:'USOIL',  nome:'WTI Crude',       p:62.40,   c:-1.23, lo:55.12,   hi:87.67 },
-  {sym:'BITCOIN',nome:'Bitcoin USD',     p:102450,  c:+2.14, lo:49000,   hi:109350},
+  {sym:'BCOM',   nome:'Bloomberg Cmdty', p:98.40,   c:-0.31, lo:88.10,   hi:108.60,  cur:'usd'},
+  {sym:'GOLD',   nome:'Ouro Spot',       p:3275.50, c:+1.42, lo:1987.40, hi:3357.20, cur:'usd'},
+  {sym:'SILVER', nome:'Prata Spot',      p:32.80,   c:+0.87, lo:22.30,   hi:34.86,   cur:'usd'},
+  {sym:'USOIL',  nome:'WTI Crude',       p:62.40,   c:-1.23, lo:55.12,   hi:87.67,   cur:'usd'},
+  {sym:'BITCOIN',nome:'Bitcoin USD',     p:102450,  c:+2.14, lo:49000,   hi:109350,  cur:'usd'},
 ];
 const JI = [
   {sym:'FED FUNDS',nome:'Fed Funds Rate',  val:4.33, bp:0   },
@@ -664,20 +664,22 @@ function miniBar(v, arr) {
   return `<div class="bar-bg"><div class="bar-fg" style="width:${w}%"></div></div>`;
 }
 
+function fmtCur(v, cur) {
+  if (cur==='brl') return 'R$ ' + (v>999 ? n0(v) : n2(v));
+  if (cur==='usd') return '$ '  + (v>999 ? n0(v) : n2(v));
+  return (v>999 ? n0(v) : n2(v)); // pts — no symbol
+}
 function renderEq(id, data) {
   const el = document.getElementById(id);
   if (!el) return;
   el.innerHTML = data.map(a => {
     const p = jitter(a.p), c = jchg(a.c), up = c>=0;
-    const pf = p>999 ? n0(p) : n2(p);
-    const lf = a.lo>999 ? n0(a.lo) : n2(a.lo);
-    const hf = a.hi>999 ? n0(a.hi) : n2(a.hi);
     return row(up?'fup':'fdn', [
       `<span class="sym">${a.sym}</span>`,
       `<span class="name">${a.nome}</span>`,
-      `<span class="val">${pf}</span>`,
+      `<span class="val">${fmtCur(p, a.cur)}</span>`,
       colorVal(pct(c), up),
-      `<span style="font-size:var(--fs-xs);color:var(--t2)">${lf} / ${hf}</span>`
+      `<span style="font-size:var(--fs-xs);color:var(--t2)">${fmtCur(a.lo, a.cur)} / ${fmtCur(a.hi, a.cur)}</span>`
     ]);
   }).join('');
 }
@@ -710,4 +712,4 @@ refreshTab3();
 setInterval(refreshTab3, 5000);
 </script>
 </body>
-</htm
+</html>
